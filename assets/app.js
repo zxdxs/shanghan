@@ -21,6 +21,11 @@ function esc(s) {
   return String(s == null ? "" : s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
+// 極簡行內標記：資料裡的 **粗體** → <b>，其餘一律轉義。
+// 全站只認這一種標記，不做半套 markdown 解析器。
+function mdInline(s) {
+  return esc(s).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+}
 // 在原文中標出模態詞（閱讀輔助）
 // 只標「證據強度詞」。刻意排除「當」「為」「愈」等常用虛詞——全標等於沒標。
 var MODS = ["主之", "可與", "不可", "不當", "難治", "不治", "宜", "屬", "死"];
@@ -150,6 +155,7 @@ var MODULES = [
   { id: "mastery", icon: "📈", title: "自測",   desc: "掌握度定位。" },
   { id: "progress",icon: "🗂", title: "進度",   desc: "已讀與記誦紀錄。" },
   { id: "source",  icon: "📜", title: "出處",   desc: "底本、校勘、對齊信心、未決問題。" },
+  { id: "contact", icon: "✉️", title: "聯絡",   desc: "指正與聯絡；識人訓練站。" },
   { id: "teacher", icon: "📖", title: "給教學者", desc: "課孫用法與紅線。" },
   { id: "disclaimer", icon: "⚠️", title: "聲明", desc: "使用限制與免責；非有師傳，不可自行使用。" }
 ];
@@ -1013,6 +1019,90 @@ VIEWS.source = function (box) {
       }).join("") + "</table>";
     box.appendChild(q);
   }
+  var cc = el("div", "card");
+  var R = SH.recipes || [];
+  var noComp = R.filter(function (r) { return !(r.comp || []).length; }).length;
+  var noPrep = R.filter(function (r) { return !(r.prep || "").trim(); }).length;
+  cc.innerHTML = "<h3>發現問題？</h3>" +
+    "<p class='small'>本站最大的不確定處是<b>條號與原文的對應</b>——" +
+    m.stats.tiao + " 條條文中有 " + (m.stats.tiao - m.stats.tiao_high) + " 條為 provisional。" +
+    "另有 " + (SH.variants || []).length + " 條異文、" +
+    noComp + " 方未抽到組成、" + noPrep + " 方未抽到煎服法。" +
+    "看到不對的地方，請到 <a href='#/contact'>✉️ 聯絡</a> 頁告訴我；" +
+    "原文異文我一律兩處並存，不代改一字。</p>";
+  box.appendChild(cc);
+};
+
+/* ---------- 聯絡 ---------- */
+VIEWS.contact = function (box) {
+  var C = SH.contact;
+  if (!C) { box.appendChild(el("p", "muted", "尚無聯絡資料。")); return; }
+  box.appendChild(crumbs(C.title || "指正與聯絡", ""));
+
+  var lead = el("div", "card lead");
+  lead.innerHTML = "<p>" + mdInline(C.lead || "") + "</p>";
+  box.appendChild(lead);
+
+  if ((C.want || []).length) {
+    var w = el("div", "card");
+    w.innerHTML = "<h3>最需要人幫忙的四件事</h3>" +
+      "<p class='small muted'>前三項是機械抽取的邊界，回報一處就少一處；" +
+      "第一項是本站最大的不確定處。</p>" +
+      (C.want || []).map(function (x) {
+        return "<h4 class='want-k'>" + esc(x.k) + "</h4>" +
+          "<p class='small'>" + mdInline(x.d) + "</p>";
+      }).join("");
+    box.appendChild(w);
+  }
+
+  var it = el("div", "card");
+  it.appendChild(el("h3", "", "怎麼聯絡"));
+  (C.items || []).forEach(function (x) {
+    var row = el("div", "contact-row");
+    var left = el("div", "contact-txt");
+    left.appendChild(el("h4", "", x.k + (x.note ? "（" + x.note + "）" : "")));
+    var d = el("p", "small"); d.innerHTML = mdInline(x.d); left.appendChild(d);
+    if (x.mail) {
+      var a = el("a", "mail", x.mailText || x.mail);
+      a.href = "mailto:" + x.mail;
+      left.appendChild(a);
+    }
+    row.appendChild(left);
+    if (x.qr) {
+      var wrap = el("div", "qr");
+      var im = el("img");
+      im.setAttribute("src", x.qr);
+      im.setAttribute("alt", x.qrAlt || "二維碼");
+      im.setAttribute("loading", "lazy");
+      im.setAttribute("width", "180");
+      im.setAttribute("height", "298");
+      wrap.appendChild(im);
+      wrap.appendChild(el("p", "tiny muted", x.qrAlt || ""));
+      row.appendChild(wrap);
+    }
+    it.appendChild(row);
+  });
+  box.appendChild(it);
+
+  var st = el("div", "card");
+  st.appendChild(el("h3", "", "相關站點"));
+  (C.sites || []).forEach(function (s) {
+    var d = el("div", "site");
+    var a = el("a", "site-a", s.k + " ↗");
+    a.href = s.url;
+    a.setAttribute("target", "_blank");
+    a.setAttribute("rel", "noopener noreferrer");
+    d.appendChild(a);
+    var p = el("p", "small"); p.innerHTML = mdInline(s.d); d.appendChild(p);
+    d.appendChild(el("p", "tiny muted", s.url));
+    st.appendChild(d);
+  });
+  box.appendChild(st);
+
+  var cl = el("div", "card");
+  cl.innerHTML = "<p class='small'>" + mdInline(C.close || "") + "</p>" +
+    "<p class='muted small' style='text-align:right'>⚠ " + esc(C.seal || "") + "</p>";
+  box.appendChild(cl);
 };
 
 /* ---------- 給教學者 ---------- */
@@ -1066,7 +1156,7 @@ VIEWS.disclaimer = function (box) {
   var c0 = el("div", "card");
   c0.style.borderTop = "6px solid var(--brand)";
   c0.innerHTML = "<h2 style='border:0;padding:0;color:var(--brand);text-align:center;margin:.2em 0'>⚠ "
-    + esc(D.core) + "</h2><p>" + esc(D.lead) + "</p>";
+    + esc(D.core) + "</h2><p>" + mdInline(D.lead) + "</p>";
   box.appendChild(c0);
 
   var c1 = el("div", "card");
@@ -1092,13 +1182,13 @@ VIEWS.disclaimer = function (box) {
 
   var c4 = el("div", "card");
   c4.innerHTML = "<h3>四、藥與劑量的特別聲明</h3><ul>" + D.drug.map(function (x) {
-    return "<li>" + esc(x.replace(/\*\*/g, "")) + "</li>";
+    return "<li>" + mdInline(x) + "</li>";
   }).join("") + "</ul>";
   box.appendChild(c4);
 
   var c5 = el("div", "card");
   c5.innerHTML = "<h3>五、來源與版權</h3><ul>" + D.source.map(function (x) {
-    return "<li>" + esc(x.replace(/\*\*/g, "")) + "</li>";
+    return "<li>" + mdInline(x) + "</li>";
   }).join("") + "</ul>";
   box.appendChild(c5);
 
@@ -1177,6 +1267,27 @@ window.addEventListener("hashchange", route);
 if (!location.hash) location.hash = "#/idea";
 route();
 $("#footNote").textContent = (SH.meta && SH.meta.warn) || "";
+
+// 頁腳常駐連結：聯絡 + 相關站點（資料來自 contact.json，不手寫）
+(function footLinks() {
+  var fl = $("#footLinks");
+  if (!fl) return;
+  var C = SH.contact || {};
+  function link(txt, href, blank) {
+    var a = el("a", "", txt);
+    a.href = href;
+    if (blank) {
+      a.setAttribute("target", "_blank");
+      a.setAttribute("rel", "noopener noreferrer");
+    }
+    fl.appendChild(a);
+  }
+  link("✉️ 指正與聯絡", "#/contact", false);
+  (C.items || []).forEach(function (x) {
+    if (x.mail) link(x.mailText || x.mail, "mailto:" + x.mail, false);
+  });
+  (C.sites || []).forEach(function (s) { link(s.k + " ↗", s.url, true); });
+})();
 
 gateShow();
 

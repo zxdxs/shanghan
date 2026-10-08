@@ -137,6 +137,36 @@ td.num{text-align:right; font-variant-numeric:tabular-nums}
 .limitbar{background:#fbeaea; border:1px solid #e8c9c9; color:#8a2f2f;
   border-radius:10px; padding:9px 12px; margin:12px 0; font-size:.86rem; font-weight:600;
   text-align:center; letter-spacing:.02em}
+
+/* ---------- 頁腳常駐連結 ---------- */
+.foot-links{display:flex; flex-wrap:wrap; gap:6px 14px; margin:.5em 0 .3em}
+.foot-links a{font-size:.82rem; border-bottom:1px dotted var(--brand2)}
+
+/* ---------- 聯絡 ---------- */
+.card.lead{border-left:5px solid var(--brand); background:#fffdf6}
+.card.lead p{margin:0}
+.contact-row{display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start;
+  padding:12px 0; border-top:1px solid var(--line)}
+.contact-row:first-of-type{border-top:0}
+.contact-row h4{margin:0 0 .2em}
+.contact-txt{flex:1 1 260px; min-width:0}
+.contact-txt p{margin:.2em 0 .5em}
+.mail{font-family:ui-monospace,Menlo,monospace; font-size:.95rem;
+  background:#f4ede0; border:1px solid var(--line); border-radius:6px;
+  padding:3px 8px; display:inline-block; word-break:break-all}
+.qr{flex:0 0 auto; text-align:center}
+.qr img{display:block; width:180px; height:auto; border:1px solid var(--line);
+  border-radius:10px; background:#fff; padding:6px}
+.qr p{margin:.3em 0 0}
+.site{padding:10px 0; border-top:1px solid var(--line)}
+.site:first-of-type{border-top:0}
+.site-a{font-weight:700; font-size:1.02rem}
+.site p{margin:.35em 0 0}
+h4.want-k{margin:.9em 0 .2em; color:var(--brand)}
+@media (max-width:560px){
+  .contact-row{gap:12px}
+  .qr img{width:150px}
+}
 @media (max-width:560px){
   .wrap{padding:14px 12px 70px}
   .orig{font-size:1rem}

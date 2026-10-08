@@ -97,9 +97,9 @@ cd shanghan-reader && python3 -m http.server 8765
 | 條號（邊欄編號） | 964（逐卷與底本附錄四〈條文編號對照表〉相符） |
 | 條文 | 943 |
 | 方劑實例 | 425 |
-| 校勘異文 | 116 |
-| 安全邊界卡 | 151 |
-| 劑量換算 | 1708 項藥味，92.8% 可換克 |
+| 校勘異文 | 127 條（其中 102 條載有他本異文） |
+| 安全邊界卡 | 150（禁忌 118、誤治救逆 32） |
+| 劑量換算 | 1868 項藥味，高信心可換克 1679（89.9%） |
 | 題庫 | 171 |
 | 圖譜：六經階段 / 內傷路徑 / 截斷通則 / 誤診鏈 | 6 / 4 / 10 / 8 |
 | 準備性知識 | 5 類 28 項＋自測 8 題＋破音字 15＋難詞 26＋難字 204 |
@@ -133,19 +133,21 @@ cd shanghan-reader && python3 -m http.server 8765
 通讀 5 條 → 抽背 1 條 → 做 5 題。一週約 35 條、7 條記誦、35 題；
 全書 943 條約 27 週。
 
-## 部署到 GitHub Pages
+## 已發布位置
 
-**發布前的唯一前置**：在 GitHub 網頁建一個**空 repo**（不要加 README／LICENSE，避免衝突）。
+- 站台：<https://zxdxs.github.io/shanghan/>
+  （尚未開啟 Pages 的話：repo → Settings → Pages → `main` / `(root)`）
+- Repo：<https://github.com/zxdxs/shanghan>（公開）
+- Remote：`ssh://git@ssh.github.com:443/zxdxs/shanghan.git`
 
 ```bash
-cd ~/Documents/Harness/shanghan-reader
-git remote add origin ssh://git@ssh.github.com:443/zxdxs/shanghan.git
+cd ~/Desktop/shanghan/shanghan-reader
 ./private/push.sh          # 沿用識人訓練站的推送腳本（SSH over 443，重試 60 次）
-# 之後在 repo 的 Settings → Pages 選 main / (root)
 ```
 
-> **repo 名稱已定：`shanghan`**（帳號 `zxdxs`）。
-> 本地 repo 已初始化、已提交，`private/push.sh` 與 `ssh_known_hosts` 已就位。
+> `core.sshCommand` 已寫入本 repo 設定，直接 `git push` 也可用。
+> ⚠ 本機有兩個同名 clone（`~/Desktop/shanghan/` 與 `~/Documents/Harness/`），
+> remote 相同——請固定用其中一個推送，另一個先 `git pull`，避免互蓋。
 
 `.nojekyll` 已放好（避免 GitHub Pages 的 Jekyll 處理底線開頭的檔案）。
 
@@ -154,18 +156,23 @@ git remote add origin ssh://git@ssh.github.com:443/zxdxs/shanghan.git
 ## 改動後請跑渲染檢查
 
 ```bash
-node ../scripts/site_check.js    # 13 個視圖逐一檢查 undefined／空區塊
+node ../scripts/site_check.js    # 15 個視圖逐一檢查 undefined／空區塊，另檢頁腳與聯絡欄位
 ```
 
 曾在四診頁發生「脈象詞典內容為空」——資料正常，但渲染碼讀錯鍵名。
 視覺抽查漏看了那一頁，機械掃描一次就抓到。
 
-## 再生資料
+## 再生資料（僅限維護者本機）
+
+> ⚠ **`scripts/` 與 `data/` 不在這個 repo 裡。**
+> 以下指令要在維護者本機的專案根目錄（`shanghan/`）執行，
+> 只 clone 這個 repo 的人**無法**重跑複現。站上數字可讀可查，
+> 但複現得先拿到蒸餾管線。
 
 ```bash
-cd ..                       # 回到 shanghan 專案根目錄
-python3 scripts/build_kg.py             # 建知識圖譜（kg.json）
-python3 scripts/build_reader_site.py    # 重生成 assets/data.js
+cd ..                       # 回到 shanghan 專案根目錄（未發布）
+python3 scripts/build_reader_site.py    # 由 data/distilled/*.json 重生成 assets/data.js
+node scripts/site_check.js              # 渲染層機械檢查
 ```
 
 ## 檔案
@@ -174,8 +181,10 @@ python3 scripts/build_reader_site.py    # 重生成 assets/data.js
 shanghan-reader/
 ├── index.html
 ├── README.md
+├── CONTACT.md          指正與聯絡（由 scripts/build_contact.py 生成）
 └── assets/
-    ├── style.css   樣式（紙色、原文襯線、可列印）
-    ├── data.js     生成檔（916 KB），請勿手改
-    └── app.js      路由、視圖、SVG 圖譜、題庫、進度
+    ├── style.css       樣式（紙色、原文襯線、可列印）
+    ├── data.js         生成檔（約 1 MB），請勿手改
+    ├── wechat-qr.jpg   微信二維碼素材
+    └── app.js          路由、視圖、SVG 圖譜、題庫、進度
 ```
