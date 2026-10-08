@@ -135,14 +135,17 @@ cd shanghan-reader && python3 -m http.server 8765
 
 ## 部署到 GitHub Pages
 
+**發布前的唯一前置**：在 GitHub 網頁建一個**空 repo**（不要加 README／LICENSE，避免衝突）。
+
 ```bash
-cd shanghan-reader
-git init && git add -A && git commit -m "傷寒雜病論讀書訓練站"
-git branch -M main
-git remote add origin <你的 repo>
-git push -u origin main
+cd ~/Documents/Harness/shanghan-reader
+git remote add origin ssh://git@ssh.github.com:443/zxdxs/shanghan.git
+./private/push.sh          # 沿用識人訓練站的推送腳本（SSH over 443，重試 60 次）
 # 之後在 repo 的 Settings → Pages 選 main / (root)
 ```
+
+> **repo 名稱已定：`shanghan`**（帳號 `zxdxs`）。
+> 本地 repo 已初始化、已提交，`private/push.sh` 與 `ssh_known_hosts` 已就位。
 
 `.nojekyll` 已放好（避免 GitHub Pages 的 Jekyll 處理底線開頭的檔案）。
 
