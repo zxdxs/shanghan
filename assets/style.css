@@ -1,0 +1,149 @@
+/* ============================================================
+   桂林古本讀書訓練站 · 樣式
+   屋風：溫紙底、原文襯線、介面無襯線；手機可加到主畫面；可列印。
+   ============================================================ */
+:root{
+  --paper:#f7f3ea; --paper2:#fffdf8; --ink:#23201b; --ink2:#5c554a;
+  --line:#ded5c4; --brand:#8a3b2a; --brand2:#b5654f; --ok:#2f6b4f; --warn:#a8721c;
+  --bad:#9c3b3b; --hl:#ffe9a8; --maxw:1000px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font:16px/1.75 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:20px 18px 80px}
+a{color:var(--brand); text-decoration:none}
+a:hover{text-decoration:underline}
+h1,h2,h3{line-height:1.35; margin:1.4em 0 .5em}
+h1{font-size:1.5rem; margin-top:.4em}
+h2{font-size:1.18rem; border-left:5px solid var(--brand); padding-left:10px}
+h3{font-size:1.02rem; color:var(--ink2)}
+p{margin:.6em 0}
+.tiny{font-size:.8rem} .small{font-size:.9rem}
+.muted{color:var(--ink2)}
+code{background:#efe9dc; padding:1px 5px; border-radius:4px; font-size:.88em}
+
+/* ---------- 頂欄 ---------- */
+.top{
+  position:sticky; top:0; z-index:20; background:rgba(247,243,234,.95);
+  backdrop-filter:saturate(1.2) blur(6px); border-bottom:1px solid var(--line);
+}
+.brand{display:flex; gap:12px; align-items:center; padding:12px 18px 6px; max-width:var(--maxw); margin:0 auto; color:inherit}
+.brand:hover{text-decoration:none}
+.brand strong{display:block; font-size:1.02rem}
+.brand em{display:block; font-style:normal; font-size:.76rem; color:var(--ink2)}
+.seal{
+  flex:none; width:52px; height:52px; border-radius:8px; background:var(--brand); color:#fff;
+  display:grid; place-items:center; font-size:.92rem; letter-spacing:.06em; font-weight:700;
+}
+.nav{display:flex; gap:6px; overflow-x:auto; padding:2px 14px 10px; max-width:var(--maxw); margin:0 auto;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav a{
+  flex:none; padding:6px 12px; border:1px solid var(--line); border-radius:999px;
+  background:var(--paper2); font-size:.86rem; color:var(--ink2); white-space:nowrap;
+}
+.nav a.on{background:var(--brand); border-color:var(--brand); color:#fff}
+
+/* ---------- 通用元件 ---------- */
+.card{background:var(--paper2); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:12px 0}
+.card h3{margin-top:0}
+.grid{display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.pill{display:inline-block; padding:1px 8px; border-radius:999px; font-size:.75rem;
+  border:1px solid var(--line); background:#fff; color:var(--ink2); margin:0 4px 4px 0}
+.pill.b{background:#fdeeea; border-color:#eccfc6; color:var(--brand)}
+.pill.g{background:#eaf4ee; border-color:#cfe4d7; color:var(--ok)}
+.pill.y{background:#fdf3e0; border-color:#eddcc2; color:var(--warn)}
+.pill.r{background:#fbeaea; border-color:#e8c9c9; color:var(--bad)}
+.btn{
+  display:inline-block; padding:8px 16px; border-radius:8px; border:1px solid var(--brand);
+  background:var(--brand); color:#fff; cursor:pointer; font-size:.9rem; font-family:inherit;
+}
+.btn.ghost{background:var(--paper2); color:var(--brand)}
+.btn:disabled{opacity:.45; cursor:default}
+.row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+select,input[type=text]{
+  font:inherit; padding:7px 10px; border:1px solid var(--line); border-radius:8px;
+  background:var(--paper2); color:var(--ink); max-width:100%;
+}
+hr{border:0; border-top:1px solid var(--line); margin:20px 0}
+.src{font-size:.78rem; color:var(--ink2); margin-top:4px}
+mark, .hl{background:var(--hl); padding:0 2px; border-radius:3px}
+
+/* ---------- 原文 ---------- */
+.orig{font-family:"Songti TC","Noto Serif TC",Georgia,serif; font-size:1.06rem; line-height:1.95;
+  background:#fffdf6; border:1px solid var(--line); border-left:4px solid var(--brand2);
+  border-radius:8px; padding:12px 14px; margin:10px 0; white-space:pre-wrap}
+.tiao{border-bottom:1px dashed var(--line); padding:10px 0}
+.tiao:last-child{border-bottom:0}
+.tiao .no{font-weight:700; color:var(--brand); margin-right:6px}
+.tiao .meta{margin-top:6px}
+
+/* ---------- 圖譜 ---------- */
+.chart{width:100%; height:auto; margin:10px 0}
+.ch-a{fill:#f3e4dd; stroke:#dcc3b8}
+.ch-b{fill:#fff; stroke:var(--line)}
+.ch-root{fill:#f7e2d8; stroke:#e0bfae}
+.ch-line{stroke:#c9bda9; stroke-width:1.4}
+.ch-line.faint{stroke:#ded5c4; stroke-dasharray:3 3}
+.ch-arrow{fill:#c9bda9}
+.ch-t{font-size:13px; fill:var(--ink); font-family:inherit}
+.ch-t.on-brand{font-size:13px; fill:var(--brand); font-weight:600}
+.ch-t.root{font-size:14px; fill:var(--brand); font-weight:700}
+.ch-gate{fill:#eaf4ee; stroke:#bcd9c6}
+.ch-t.gate{font-size:12.5px; fill:#2f6b4f; font-weight:600; text-anchor:start}
+
+/* ---------- 題庫 ---------- */
+.q{font-size:1.05rem; margin:6px 0 12px}
+.opt{display:block; width:100%; text-align:left; margin:7px 0; padding:11px 14px;
+  border:1px solid var(--line); border-radius:9px; background:var(--paper2); cursor:pointer;
+  font:inherit; color:inherit}
+.opt:hover{border-color:var(--brand2)}
+.opt.right{background:#eaf4ee; border-color:var(--ok)}
+.opt.wrong{background:#fbeaea; border-color:var(--bad)}
+.opt:disabled{cursor:default}
+
+/* ---------- 表格 ---------- */
+table{width:100%; border-collapse:collapse; margin:10px 0; font-size:.9rem}
+th,td{border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top}
+th{background:#f1ebdd; font-weight:600}
+td.num{text-align:right; font-variant-numeric:tabular-nums}
+
+/* ---------- 進度條 ---------- */
+.bar{height:9px; border-radius:999px; background:#e9e1d2; overflow:hidden}
+.bar>i{display:block; height:100%; background:var(--brand2)}
+.foot{max-width:var(--maxw); margin:0 auto; padding:20px 18px 40px; color:var(--ink2);
+  border-top:1px solid var(--line); font-size:.82rem}
+
+/* ---------- 使用限制確認閘 ---------- */
+.gate{position:fixed; inset:0; z-index:99; background:rgba(35,32,27,.82);
+  display:flex; align-items:center; justify-content:center; padding:18px;
+  -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px)}
+.gate-box{background:var(--paper2); border-radius:14px; max-width:620px; width:100%;
+  max-height:88vh; overflow:auto; padding:22px 22px 18px; border-top:6px solid var(--brand)}
+.gate-box h2{margin:.1em 0 .4em; color:var(--brand); font-size:1.24rem; border:0; padding:0;
+  letter-spacing:.02em; text-align:center}
+.gate-box .core-lead{font-size:.95rem; color:var(--ink)}
+.gate-box ul{padding-left:1.1em; margin:.6em 0}
+.gate-box li{margin:.34em 0; font-size:.88rem}
+.gate-box .gate-act{display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  margin-top:16px; padding-top:14px; border-top:1px solid var(--line)}
+.gate-box .gate-mark{text-align:center; font-size:2rem; line-height:1; color:var(--brand); margin-bottom:4px}
+
+/* 常駐限制條 */
+.limitbar{background:#fbeaea; border:1px solid #e8c9c9; color:#8a2f2f;
+  border-radius:10px; padding:9px 12px; margin:12px 0; font-size:.86rem; font-weight:600;
+  text-align:center; letter-spacing:.02em}
+@media (max-width:560px){
+  .wrap{padding:14px 12px 70px}
+  .orig{font-size:1rem}
+  h1{font-size:1.28rem}
+}
+@media print{
+  .top,.nav,.foot,.btn{display:none!important}
+  body{background:#fff}
+  .card{break-inside:avoid}
+}
