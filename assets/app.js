@@ -1221,16 +1221,31 @@ function bodyCollate(box) {
   }
   box.appendChild(c2);
 
+  /* 二之二、底本自身校勘記的結構化覆蓋 */
+  var AP = C.apparatus;
+  if (AP) {
+    box.appendChild(el("div", "card")).innerHTML =
+      "<h3>三、底本自身校勘記的覆蓋</h3>" +
+      "<p class='small'>" + mdInline(AP.note) + "</p>" +
+      "<table><tr><th>項目</th><th>數量</th></tr>" +
+      "<tr><td>底本提及他本（白雲閣／會通／廣西／宋／湘古）的段落</td><td class='num'>" + AP.bendiMentions + "</td></tr>" +
+      "<tr><td>已結構化為校勘記層</td><td class='num'>" + AP.structured + "</td></tr>" +
+      "<tr><td>其中未繫到條文（保留佔位，未強行歸屬）</td><td class='num'>" + AP.unattached + "</td></tr>" +
+      "<tr><td>已抽出為異文條目</td><td class='num'>" + AP.variants + "</td></tr>" +
+      "<tr><td>其中載有他本異文</td><td class='num'>" + AP.variantsWithWitness + "</td></tr>" +
+      "</table><p class='small muted'>" + mdInline(AP.verdict) + "</p>";
+  }
+
   /* 三、方法 */
   box.appendChild(el("div", "card")).innerHTML =
-    "<h3>三、方法</h3><ul class='small'>" +
+    "<h3>四、方法</h3><ul class='small'>" +
     (C.method || []).map(function (m) { return "<li>" + mdInline(m) + "</li>"; }).join("") +
     "</ul>";
 
   /* 四、限制 */
   var c4 = el("div", "card");
   c4.style.borderLeft = "5px solid var(--warn)";
-  c4.innerHTML = "<h3>四、限制——本站做不到的部分</h3><ul class='small'>" +
+  c4.innerHTML = "<h3>五、限制——本站做不到的部分</h3><ul class='small'>" +
     (C.limits || []).map(function (m) { return "<li>" + mdInline(m) + "</li>"; }).join("") +
     "</ul>";
   box.appendChild(c4);
