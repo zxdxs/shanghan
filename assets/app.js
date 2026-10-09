@@ -204,7 +204,7 @@ function sectionTabs(box, items, want) {
 var TABKEYS = {
   four:  ["切診", "聞診", "嗅診", "問診", "色診"],
   mine:  ["mastery", "progress"],
-  about: ["source", "contact"]
+  about: ["source", "collation", "contact"]
 };
 function tiaoPills(t) {
   var d = el("div", "meta");
@@ -214,6 +214,12 @@ function tiaoPills(t) {
     t.cf === "high" ? "對齊 high" : "對齊 provisional"));
   if (t.pv === true) d.appendChild(el("span", "pill g", "頁碼已證"));
   if (t.dc) d.appendChild(el("span", "pill r", "分歧 " + t.dc));
+  // 底本可疑處：只做記號，不改原文（詳見「關於 → 校勘」）
+  if (t.fx && t.fx.length) {
+    var fx = el("span", "pill y", "底本可疑 " + t.fx.length);
+    fx.setAttribute("title", t.fx.join("、") + "　——　詳見「關於 → 校勘」");
+    d.appendChild(fx);
+  }
   return d;
 }
 function tiaoBlock(t, opts) {
@@ -1158,7 +1164,79 @@ VIEWS.mine = function (box, params) {
   ], params && params.tab);
 };
 
-/* ---------- 關於（出處＋聯絡） ---------- */
+/* ---------- 關於：校勘 ---------- */
+function bodyCollate(box) {
+  var C = SH.collation;
+  if (!C) { box.appendChild(el("p", "muted", "尚無校勘資料。")); return; }
+  var R = C.result || {};
+  box.appendChild(el("div", "card lead")).innerHTML =
+    "<p>" + mdInline(C.lead || "") + "</p>";
+
+  /* 一、底本自身的可疑處 */
+  var kinds = {};
+  (C.defects || []).forEach(function (d) { (kinds[d.kind] = kinds[d.kind] || []).push(d); });
+  var c1 = el("div", "card");
+  var h = "<h3>一、底本自身的可疑處（" + (C.defects || []).length + " 處／" +
+    (C.defectTiao || []).length + " 條）</h3>" +
+    "<p class='small'>底本是電子校勘本，不是影印本，本身會帶進轉錄痕跡。" +
+    "<b>本站一律不代改</b>——改了就無從查核，所以只逐處列出。</p>";
+  Object.keys(kinds).forEach(function (k) {
+    h += "<h4 class='want-k'>" + esc(k) + "（" + kinds[k].length + "）</h4>" +
+      "<table><tr><th>條號</th><th>所見</th><th>說明</th><th>建議</th></tr>" +
+      kinds[k].map(function (d) {
+        return "<tr><td>【" + esc(d.tiao) + "】</td><td><code>" + esc(d.hit) +
+          "</code></td><td class='small'>" + esc(d.detail) +
+          (d.review ? " <span class='pill y'>待核</span>" : "") +
+          "</td><td class='small'>" + esc(d.suggest) + "</td></tr>";
+      }).join("") + "</table>";
+  });
+  c1.innerHTML = h;
+  box.appendChild(c1);
+
+  /* 二、兩本互校 */
+  var c2 = el("div", "card");
+  var g = R.byGrade || {};
+  c2.innerHTML = "<h3>二、與殆知閣本互校</h3>" +
+    "<p class='small'>底本實字 <b>" + (R.chars || 0).toLocaleString() + "</b>；" +
+    "差異點 <b>" + (R.diffSites || 0) + "</b>；差異字元 <b>" + (R.diffChars || 0).toLocaleString() +
+    "</b>；一致率 <b>" + ((R.identity || 0) * 100).toFixed(2) + "%</b>。</p>" +
+    "<table><tr><th>級</th><th>定義</th><th>數量</th></tr>" +
+    "<tr><td>A</td><td>差 1 字（最像轉錄誤差）</td><td class='num'>" + (g.A || 0) + "</td></tr>" +
+    "<tr><td>B</td><td>差 2–6 字</td><td class='num'>" + (g.B || 0) + "</td></tr>" +
+    "<tr><td>C</td><td>差 7–19 字</td><td class='num'>" + (g.C || 0) + "</td></tr>" +
+    "<tr><td>D</td><td>≥20 字或整段有無（多為分段層次差異）</td><td class='num'>" + (g.D || 0) + "</td></tr>" +
+    "</table>" +
+    (C.variantCaveat ? "<p class='small muted'>" + mdInline(C.variantCaveat) + "</p>" : "");
+  var A = (C.variants || []).filter(function (v) { return v.grade === "A"; });
+  if (A.length) {
+    var t = el("div");
+    t.innerHTML = "<h4>A 級差異（" + A.length + " 處，全列）</h4>" +
+      "<table><tr><th>#</th><th>底本</th><th>殆知閣</th><th>脈絡</th></tr>" +
+      A.map(function (v, i) {
+        return "<tr><td class='num'>" + (i + 1) + "</td><td><code>" +
+          esc(v.w1 || "（無）") + "</code></td><td><code>" + esc(v.w2 || "（無）") +
+          "</code></td><td class='small'>…" + esc(v.ctx) + "…</td></tr>";
+      }).join("") + "</table>";
+    c2.appendChild(t);
+  }
+  box.appendChild(c2);
+
+  /* 三、方法 */
+  box.appendChild(el("div", "card")).innerHTML =
+    "<h3>三、方法</h3><ul class='small'>" +
+    (C.method || []).map(function (m) { return "<li>" + mdInline(m) + "</li>"; }).join("") +
+    "</ul>";
+
+  /* 四、限制 */
+  var c4 = el("div", "card");
+  c4.style.borderLeft = "5px solid var(--warn)";
+  c4.innerHTML = "<h3>四、限制——本站做不到的部分</h3><ul class='small'>" +
+    (C.limits || []).map(function (m) { return "<li>" + mdInline(m) + "</li>"; }).join("") +
+    "</ul>";
+  box.appendChild(c4);
+}
+
+/* ---------- 關於（出處＋校勘＋聯絡） ---------- */
 /* 為什麼把「聯絡」放進「關於」而不是放進「我的」：
    這一頁講的是「這本書與這個站可不可信」，不是「我讀得怎樣」。
    識人訓練站也是把〈指正與聯絡〉收在出處頁，兩站一致。 */
@@ -1166,6 +1244,7 @@ VIEWS.about = function (box, params) {
   box.appendChild(crumbs("關於本站", "本站可不可信：底本、校勘、對齊信心、已知限制，以及怎麼指正我。"));
   sectionTabs(box, [
     ["出處與信心", bodySource, "source"],
+    ["校勘", bodyCollate, "collation"],
     ["指正與聯絡", bodyContact, "contact"]
   ], params && params.tab);
 };
