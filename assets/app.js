@@ -152,10 +152,8 @@ var MODULES = [
   { id: "fang",    icon: "🧪", title: "方藥",   desc: (SH.recipes || []).length + " 方；組成與漢制換算。" },
   { id: "four",    icon: "⚖️", title: "四診",   desc: "切・聞・嗅・問・色。" },
   { id: "drills",  icon: "🎯", title: "題庫",   desc: (SH.drills || []).length + " 題；七型。" },
-  { id: "mastery", icon: "📈", title: "自測",   desc: "掌握度定位。" },
-  { id: "progress",icon: "🗂", title: "進度",   desc: "已讀與記誦紀錄。" },
-  { id: "source",  icon: "📜", title: "出處",   desc: "底本、校勘、對齊信心、未決問題。" },
-  { id: "contact", icon: "✉️", title: "聯絡",   desc: "指正與聯絡；識人訓練站。" },
+  { id: "mine",    icon: "📊", title: "我的",   desc: "掌握度、通讀與記誦進度。" },
+  { id: "about",   icon: "📜", title: "關於",   desc: "出處、信心、已知限制；指正與聯絡。" },
   { id: "teacher", icon: "📖", title: "給教學者", desc: "課孫用法與紅線。" },
   { id: "disclaimer", icon: "⚠️", title: "聲明", desc: "使用限制與免責；非有師傳，不可自行使用。" }
 ];
@@ -176,6 +174,38 @@ function crumbs(title, sub) {
   if (sub) d.appendChild(el("p", "muted", sub));
   return d;
 }
+/* 分頁：沿用四診頁的「按鈕列 + body」慣例，但多一個可指定初始頁的 key。
+   items = [[按鈕文字, 渲染函式(容器), key], …]
+   渲染函式兩種寫法都收：自己 append 進容器，或回傳一個節點由這裡掛上
+   （四診頁原本是後者，改版前後不必改寫那五個函式）。
+   例：sectionTabs(box, [["出處", bodySource, "source"]], "contact") */
+function sectionTabs(box, items, want) {
+  var tabs = el("div", "row");
+  var body = el("div");
+  function show(i) {
+    $$("button", tabs).forEach(function (x, j) { x.className = "btn" + (i === j ? "" : " ghost"); });
+    body.innerHTML = "";
+    var r = items[i][1](body);
+    if (r && r.tagName) body.appendChild(r);
+  }
+  var init = 0;
+  items.forEach(function (it, i) {
+    if (want != null && (it[2] === want || it[0] === want || String(i) === String(want))) init = i;
+    var b = el("button", "btn ghost", it[0]);
+    b.onclick = function () { show(i); };
+    tabs.appendChild(b);
+  });
+  box.appendChild(tabs);
+  box.appendChild(body);
+  show(init);
+}
+/* 各視圖的分頁 key，供 scripts/site_check.js 把**每一頁分頁**都跑一遍
+   （只跑預設分頁的話，另一半等於沒檢查）。 */
+var TABKEYS = {
+  four:  ["切診", "聞診", "嗅診", "問診", "色診"],
+  mine:  ["mastery", "progress"],
+  about: ["source", "contact"]
+};
 function tiaoPills(t) {
   var d = el("div", "meta");
   (t.m || []).forEach(function (m) { d.appendChild(el("span", "pill b", m)); });
@@ -732,12 +762,10 @@ VIEWS.fang = function (box, params) {
 };
 
 /* ---------- 四診 ---------- */
-VIEWS.four = function (box) {
+VIEWS.four = function (box, params) {
   box.appendChild(crumbs("四診", "切・聞・嗅・問・色。素材取自卷一卷二〈平脈法〉與全書條文。"));
-  var tabs = el("div", "row");
-  var body = el("div");
   var T = [
-    ["切", function () {
+    ["切診", function () {
       var h = el("div");
       h.appendChild(el("div", "card")).innerHTML = "<h3>分部</h3><table><tr><th>項</th><th>原文</th></tr>" +
         SH.pulse.sections.map(function (s) {
@@ -760,7 +788,7 @@ VIEWS.four = function (box) {
         }).join("") + "</table>";
       return h;
     }],
-    ["聞", function () {
+    ["聞診", function () {
       var h = el("div", "card");
       h.innerHTML = "<h3>聽（聲與言）</h3><table><tr><th>項</th><th>原文</th></tr>" +
         SH.listen.map(function (x) {
@@ -768,7 +796,7 @@ VIEWS.four = function (box) {
         }).join("") + "</table>";
       return h;
     }],
-    ["嗅", function () {
+    ["嗅診", function () {
       var h = el("div");
       var c = el("div", "card");
       c.innerHTML = "<h3>嗅（氣味）</h3><table><tr><th>項</th><th>原文</th><th>級</th></tr>" +
@@ -788,7 +816,7 @@ VIEWS.four = function (box) {
       }
       return h;
     }],
-    ["問", function () {
+    ["問診", function () {
       var h = el("div", "card");
       h.innerHTML = "<h3>問診八類</h3>" + svgChart({
         type: "tree", title: "傷寒論所問", root: "問診（八類）",
@@ -798,7 +826,7 @@ VIEWS.four = function (box) {
         "</table>";
       return h;
     }],
-    ["色", function () {
+    ["色診", function () {
       var h = el("div", "card");
       h.innerHTML = "<h3>色診（與《望診遵經》對照）</h3>" + svgChart({
         type: "pairs", title: "五色 × 五臟",
@@ -809,17 +837,9 @@ VIEWS.four = function (box) {
       return h;
     }]
   ];
-  T.forEach(function (t, i) {
-    var b = el("button", "btn" + (i ? " ghost" : ""), t[0] + "診");
-    b.onclick = function () {
-      $$("button", tabs).forEach(function (x) { x.className = "btn ghost"; });
-      b.className = "btn";
-      body.innerHTML = ""; body.appendChild(t[1]());
-    };
-    tabs.appendChild(b);
-  });
-  box.appendChild(tabs); box.appendChild(body);
-  body.appendChild(T[0][1]());
+  // 分頁機制交給 sectionTabs（原本是這裡的第二套實作，且切換碼藏在
+  // onclick 裡，機械檢查從未觸發過）。標籤本身即為分頁 key。
+  sectionTabs(box, T, params && params.tab);
 };
 
 /* ---------- 題庫 ---------- */
@@ -828,7 +848,7 @@ VIEWS.drills = function (box, params) {
   var label = { 位: "定位（卷篇）", 力: "模態（證據強度）", 方: "方證配對", 量: "劑量換算",
                 脈: "脈象辨識", 禁: "禁忌判斷", 文: "異文辨讀" };
   var cur = { kind: (params && params.k) || "", i: 0, right: 0, total: 0, q: null, answered: false };
-  box.appendChild(crumbs("題庫", "七型共 " + SH.drills.length + " 題。答錯會記下，於「自測」檢視弱項。"));
+  box.appendChild(crumbs("題庫", "七型共 " + SH.drills.length + " 題。答錯會記下，於「我的」檢視弱項。"));
   var bar = el("div", "card");
   var r = el("div", "row");
   var sel = el("select");
@@ -887,14 +907,23 @@ VIEWS.drills = function (box, params) {
 };
 
 /* ---------- 自測 ---------- */
-VIEWS.mastery = function (box) {
-  box.appendChild(crumbs("自測", "依答題紀錄推算各型掌握度。"));
+/* ---------- 我的：掌握度 ---------- */
+/* 這裡只放「答題算出來的程度」。通讀與記誦進度歸「進度」分頁，
+   不再兩邊各顯示一次（合併前就是這個重複讓兩頁都顯得多餘）。 */
+function bodyMastery(box) {
   var log = STATE.log || [];
   var by = {};
   log.forEach(function (x) { by[x.k] = by[x.k] || { n: 0, ok: 0 }; by[x.k].n++; by[x.k].ok += x.ok; });
   var label = { 位: "定位", 力: "模態", 方: "方證", 量: "劑量", 脈: "脈象", 禁: "禁忌", 文: "異文" };
+  if (!log.length) {
+    box.appendChild(el("div", "card")).innerHTML =
+      "<h3>還沒有作答紀錄</h3><p class='small'>掌握度由「題庫」的作答紀錄推算，" +
+      "現在是空的。先去答幾題，這裡才有東西可以看。</p>" +
+      "<p class='small muted'>答題紀錄只存在本機（localStorage），不上傳。</p>";
+    return;
+  }
   var c = el("div", "card");
-  var html = "<table><tr><th>題型</th><th>作答</th><th>答對</th><th>掌握度</th></tr>";
+  var html = "<h3>各型掌握度</h3><table><tr><th>題型</th><th>作答</th><th>答對</th><th>掌握度</th></tr>";
   ["位", "力", "方", "量", "脈", "禁", "文"].forEach(function (k) {
     var b = by[k] || { n: 0, ok: 0 };
     var p = pct(b.ok, b.n);
@@ -902,29 +931,45 @@ VIEWS.mastery = function (box) {
       b.ok + "</td><td>" + (b.n ? p + "%" : "未測") + "</td></tr>";
   });
   html += "</table>";
-  var read = Object.keys(STATE.read || {}).length;
-  var rec = Object.keys(STATE.rec || {}).length;
-  html += "<p><b>通讀</b>：已讀 " + read + " / " + SH.tiao.length + " 條（" + pct(read, SH.tiao.length) + "%）</p>" +
-    "<div class='bar'><i style='width:" + pct(read, SH.tiao.length) + "%'></i></div>" +
-    "<p style='margin-top:12px'><b>記誦</b>：已記 " + rec + " / " + SH.recite.length + " 條（" +
-    pct(rec, SH.recite.length) + "%）</p>" +
-    "<div class='bar'><i style='width:" + pct(rec, SH.recite.length) + "%'></i></div>" +
-    "<p class='small muted' style='margin-top:12px'>掌握度低於 60% 的題型，建議回「方法」頁重讀對應章節。</p>";
+  var weak = ["位", "力", "方", "量", "脈", "禁", "文"].filter(function (k) {
+    var b = by[k] || { n: 0, ok: 0 };
+    return b.n >= 3 && pct(b.ok, b.n) < 60;
+  });
+  html += "<p class='small muted'>" + (weak.length
+    ? "掌握度低於 60%（且作答 ≥3 題）的題型：" +
+      weak.map(function (k) { return "<b>" + label[k] + "</b>" + "（" + pct(by[k].ok, by[k].n) + "%）"; }).join("、") +
+      "。建議回「方法」頁重讀對應章節。"
+    : "目前沒有明顯弱項（或樣本不足 3 題）。") + "</p>";
   c.innerHTML = html;
   box.appendChild(c);
-};
+  var c2 = el("div", "card");
+  c2.innerHTML = "<h3>最近作答</h3><table><tr><th>題型</th><th>結果</th></tr>" +
+    log.slice(-10).reverse().map(function (x) {
+      return "<tr><td>" + esc(label[x.k] || x.k) + "</td><td>" +
+        (x.ok ? "<span style='color:var(--ok)'>對</span>" : "<span style='color:#9c3b3b'>錯</span>") +
+        "</td></tr>";
+    }).join("") + "</table>";
+  box.appendChild(c2);
+}
 
 /* ---------- 進度 ---------- */
-VIEWS.progress = function (box) {
-  box.appendChild(crumbs("進度", "全部存在本機（localStorage），不上傳、不同步。"));
+/* ---------- 我的：進度 ---------- */
+function bodyProgress(box) {
   var read = STATE.read || {}, rec = STATE.rec || {}, log = STATE.log || [];
+  var nRead = Object.keys(read).length, nRec = Object.keys(rec).length;
   var c = el("div", "card");
   c.innerHTML = "<h3>總覽</h3><table>" +
     "<tr><th>項目</th><th>數量</th></tr>" +
-    "<tr><td>已讀條文</td><td class='num'>" + Object.keys(read).length + " / " + SH.tiao.length + "</td></tr>" +
-    "<tr><td>已記誦</td><td class='num'>" + Object.keys(rec).length + " / " + SH.recite.length + "</td></tr>" +
+    "<tr><td>已讀條文</td><td class='num'>" + nRead + " / " + SH.tiao.length + "</td></tr>" +
+    "<tr><td>已記誦</td><td class='num'>" + nRec + " / " + SH.recite.length + "</td></tr>" +
     "<tr><td>答題紀錄</td><td class='num'>" + log.length + " 筆</td></tr>" +
-    "</table>";
+    "</table>" +
+    "<p style='margin-top:12px'><b>通讀</b>：已讀 " + nRead + " / " + SH.tiao.length +
+    " 條（" + pct(nRead, SH.tiao.length) + "%）</p>" +
+    "<div class='bar'><i style='width:" + pct(nRead, SH.tiao.length) + "%'></i></div>" +
+    "<p style='margin-top:12px'><b>記誦</b>：已記 " + nRec + " / " + SH.recite.length +
+    " 條（" + pct(nRec, SH.recite.length) + "%）</p>" +
+    "<div class='bar'><i style='width:" + pct(nRec, SH.recite.length) + "%'></i></div>";
   box.appendChild(c);
   var byVol = {};
   SH.tiao.forEach(function (t) { if (read[t.id]) byVol[t.v] = (byVol[t.v] || 0) + 1; });
@@ -948,12 +993,12 @@ VIEWS.progress = function (box) {
   c3.appendChild(el("h3", "", "重置"));
   c3.appendChild(b);
   box.appendChild(c3);
-};
+}
 
-/* ---------- 出處 ---------- */
-VIEWS.source = function (box) {
+/* ---------- 關於：出處與信心 ---------- */
+function bodySource(box) {
   var m = SH.meta;
-  box.appendChild(crumbs("出處與信心", "這一頁講清楚：資料從哪來、哪些可信、哪些還不確定。"));
+  box.appendChild(el("p", "muted small", "這一頁講清楚：資料從哪來、哪些可信、哪些還不確定。"));
   box.appendChild(el("div", "card")).innerHTML =
     "<h3>底本</h3><p>" + esc(m.bendi) + "</p>" +
     "<p class='small muted'>另以殆知閣電子本（簡體）作外部交叉校驗。</p>" +
@@ -1028,16 +1073,15 @@ VIEWS.source = function (box) {
     m.stats.tiao + " 條條文中有 " + (m.stats.tiao - m.stats.tiao_high) + " 條為 provisional。" +
     "另有 " + (SH.variants || []).length + " 條異文、" +
     noComp + " 方未抽到組成、" + noPrep + " 方未抽到煎服法。" +
-    "看到不對的地方，請到 <a href='#/contact'>✉️ 聯絡</a> 頁告訴我；" +
+    "看到不對的地方，請到 <a href='#/about?tab=contact'>✉️ 指正與聯絡</a> 頁告訴我；" +
     "原文異文我一律兩處並存，不代改一字。</p>";
   box.appendChild(cc);
 };
 
-/* ---------- 聯絡 ---------- */
-VIEWS.contact = function (box) {
+/* ---------- 關於：指正與聯絡 ---------- */
+function bodyContact(box) {
   var C = SH.contact;
   if (!C) { box.appendChild(el("p", "muted", "尚無聯絡資料。")); return; }
-  box.appendChild(crumbs(C.title || "指正與聯絡", ""));
 
   var lead = el("div", "card lead");
   lead.innerHTML = "<p>" + mdInline(C.lead || "") + "</p>";
@@ -1103,6 +1147,27 @@ VIEWS.contact = function (box) {
   cl.innerHTML = "<p class='small'>" + mdInline(C.close || "") + "</p>" +
     "<p class='muted small' style='text-align:right'>⚠ " + esc(C.seal || "") + "</p>";
   box.appendChild(cl);
+};
+
+/* ---------- 我的（掌握度＋進度） ---------- */
+VIEWS.mine = function (box, params) {
+  box.appendChild(crumbs("我的", "掌握度、通讀與記誦紀錄；全部存在本機，不上傳、不同步。"));
+  sectionTabs(box, [
+    ["掌握度", bodyMastery, "mastery"],
+    ["進度", bodyProgress, "progress"]
+  ], params && params.tab);
+};
+
+/* ---------- 關於（出處＋聯絡） ---------- */
+/* 為什麼把「聯絡」放進「關於」而不是放進「我的」：
+   這一頁講的是「這本書與這個站可不可信」，不是「我讀得怎樣」。
+   識人訓練站也是把〈指正與聯絡〉收在出處頁，兩站一致。 */
+VIEWS.about = function (box, params) {
+  box.appendChild(crumbs("關於本站", "本站可不可信：底本、校勘、對齊信心、已知限制，以及怎麼指正我。"));
+  sectionTabs(box, [
+    ["出處與信心", bodySource, "source"],
+    ["指正與聯絡", bodyContact, "contact"]
+  ], params && params.tab);
 };
 
 /* ---------- 給教學者 ---------- */
@@ -1244,8 +1309,19 @@ function params() {
   });
   return o;
 }
+/* 舊網址別名。合併導航前後的路徑都要能用——本站已公開，
+   不能因為改版就讓別人手上的 `#/contact`、`#/source` 變成空白頁。 */
+var ALIAS = {
+  contact:  ["about", "contact"],
+  source:   ["about", "source"],
+  mastery:  ["mine", "mastery"],
+  progress: ["mine", "progress"]
+};
 function route() {
   var h = (location.hash || "#/idea").replace(/^#\//, "").split("?")[0];
+  var p = params();
+  var al = ALIAS[h];
+  if (al) { h = al[0]; if (!p.tab) p.tab = al[1]; }
   var v = VIEWS[h] || VIEWS.idea;
   $$("#nav a").forEach(function (a) {
     a.className = a.getAttribute("href") === "#/" + h ? "on" : "";
@@ -1258,7 +1334,7 @@ function route() {
     box.appendChild(el("div", "limitbar",
       "⚠ " + D.core + "　——　本站為讀書訓練工具，非診療工具；用藥須由執業中醫師決定"));
   }
-  v(box, params());
+  v(box, p);
   window.scrollTo(0, 0);
 }
 
@@ -1282,7 +1358,7 @@ $("#footNote").textContent = (SH.meta && SH.meta.warn) || "";
     }
     fl.appendChild(a);
   }
-  link("✉️ 指正與聯絡", "#/contact", false);
+  link("✉️ 指正與聯絡", "#/about?tab=contact", false);
   (C.items || []).forEach(function (x) {
     if (x.mail) link(x.mailText || x.mail, "mailto:" + x.mail, false);
   });
@@ -1294,4 +1370,6 @@ gateShow();
 // 測試鉤子：供 scripts/site_check.js 逐視圖檢查（不影響瀏覽器行為）
 window.__DSH_VIEWS = VIEWS;
 window.__DSH_MODULES = MODULES;
+window.__DSH_ALIAS = ALIAS;
+window.__DSH_TABS = TABKEYS;
 })();
